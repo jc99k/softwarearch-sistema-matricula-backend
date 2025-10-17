@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Calificacion
-from src.schemas import CalificacionCreate
+from src.schemas import CalificacionCreate, CalificacionUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -27,3 +27,19 @@ class CalificacionService:
         self.db.commit()
         self.db.refresh(new_calificacion)
         return new_calificacion
+
+    def update_calificacion(self, calificacion_id: int, calificacion_data: CalificacionUpdate):
+        calificacion = self.get_calificacion_by_id(calificacion_id)
+        if calificacion:
+            for key, value in calificacion_data.dict(exclude_unset=True).items():
+                setattr(calificacion, key, value)
+            self.db.commit()
+            self.db.refresh(calificacion)
+        return calificacion
+
+    def delete_calificacion(self, calificacion_id: int):
+        calificacion = self.get_calificacion_by_id(calificacion_id)
+        if calificacion:
+            self.db.delete(calificacion)
+            self.db.commit()
+        return calificacion

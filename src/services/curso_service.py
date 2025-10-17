@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Curso
-from src.schemas import CursoCreate
+from src.schemas import CursoCreate, CursoUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -30,3 +30,19 @@ class CursoService:
         self.db.commit()
         self.db.refresh(new_curso)
         return new_curso
+
+    def update_curso(self, curso_id: int, curso_data: CursoUpdate):
+        curso = self.get_curso_by_id(curso_id)
+        if curso:
+            for key, value in curso_data.dict(exclude_unset=True).items():
+                setattr(curso, key, value)
+            self.db.commit()
+            self.db.refresh(curso)
+        return curso
+
+    def delete_curso(self, curso_id: int):
+        curso = self.get_curso_by_id(curso_id)
+        if curso:
+            self.db.delete(curso)
+            self.db.commit()
+        return curso

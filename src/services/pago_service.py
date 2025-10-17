@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Pago
-from src.schemas import PagoCreate
+from src.schemas import PagoCreate, PagoUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -28,3 +28,19 @@ class PagoService:
         self.db.commit()
         self.db.refresh(new_pago)
         return new_pago
+
+    def update_pago(self, pago_id: int, pago_data: PagoUpdate):
+        pago = self.get_pago_by_id(pago_id)
+        if pago:
+            for key, value in pago_data.dict(exclude_unset=True).items():
+                setattr(pago, key, value)
+            self.db.commit()
+            self.db.refresh(pago)
+        return pago
+
+    def delete_pago(self, pago_id: int):
+        pago = self.get_pago_by_id(pago_id)
+        if pago:
+            self.db.delete(pago)
+            self.db.commit()
+        return pago

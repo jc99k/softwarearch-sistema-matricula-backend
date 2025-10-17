@@ -6,7 +6,7 @@ from typing import List
 
 from src.database import get_db
 from src.services.calificacion_service import CalificacionService
-from src.schemas import Calificacion, CalificacionCreate
+from src.schemas import Calificacion, CalificacionCreate, CalificacionUpdate
 
 # Layer: Controller Layer
 # This layer handles the HTTP requests and responses, interacting with the service layer.
@@ -41,3 +41,25 @@ def create_calificacion(calificacion: CalificacionCreate, db: Session = Depends(
     service = CalificacionService(db)
     new_calificacion = service.create_calificacion(calificacion)
     return new_calificacion
+
+@router.put("/{calificacion_id}", response_model=Calificacion)
+def update_calificacion(calificacion_id: int, calificacion_data: CalificacionUpdate, db: Session = Depends(get_db)):
+    """
+    Update an existing grade.
+    """
+    service = CalificacionService(db)
+    updated_calificacion = service.update_calificacion(calificacion_id, calificacion_data)
+    if updated_calificacion is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calificacion not found")
+    return updated_calificacion
+
+@router.delete("/{calificacion_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_calificacion(calificacion_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a grade.
+    """
+    service = CalificacionService(db)
+    deleted_calificacion = service.delete_calificacion(calificacion_id)
+    if deleted_calificacion is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calificacion not found")
+    return

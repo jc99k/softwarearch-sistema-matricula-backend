@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Profesor
-from src.schemas import ProfesorCreate
+from src.schemas import ProfesorCreate, ProfesorUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -31,3 +31,19 @@ class ProfesorService:
         self.db.commit()
         self.db.refresh(new_profesor)
         return new_profesor
+
+    def update_profesor(self, profesor_id: int, profesor_data: ProfesorUpdate):
+        profesor = self.get_profesor_by_id(profesor_id)
+        if profesor:
+            for key, value in profesor_data.dict(exclude_unset=True).items():
+                setattr(profesor, key, value)
+            self.db.commit()
+            self.db.refresh(profesor)
+        return profesor
+
+    def delete_profesor(self, profesor_id: int):
+        profesor = self.get_profesor_by_id(profesor_id)
+        if profesor:
+            self.db.delete(profesor)
+            self.db.commit()
+        return profesor

@@ -16,6 +16,13 @@ class EstudianteBase(BaseModel):
 class EstudianteCreate(EstudianteBase):
     pass
 
+class EstudianteUpdate(EstudianteBase):
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    dni: Optional[str] = None
+    email: Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
+
 class Estudiante(EstudianteBase):
     estudiante_id: int
     activo: bool
@@ -35,6 +42,12 @@ class ProfesorBase(BaseModel):
 class ProfesorCreate(ProfesorBase):
     pass
 
+class ProfesorUpdate(ProfesorBase):
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    dni: Optional[str] = None
+    email: Optional[str] = None
+
 class Profesor(ProfesorBase):
     profesor_id: int
     activo: bool
@@ -50,6 +63,9 @@ class FacultadBase(BaseModel):
 
 class FacultadCreate(FacultadBase):
     pass
+
+class FacultadUpdate(FacultadBase):
+    nombre: Optional[str] = None
 
 class Facultad(FacultadBase):
     facultad_id: int
@@ -68,6 +84,10 @@ class CarreraBase(BaseModel):
 class CarreraCreate(CarreraBase):
     pass
 
+class CarreraUpdate(CarreraBase):
+    facultad_id: Optional[int] = None
+    nombre: Optional[str] = None
+
 class Carrera(CarreraBase):
     carrera_id: int
     activo: bool
@@ -85,6 +105,11 @@ class CursoBase(BaseModel):
 
 class CursoCreate(CursoBase):
     pass
+
+class CursoUpdate(CursoBase):
+    carrera_id: Optional[int] = None
+    codigo: Optional[str] = None
+    nombre: Optional[str] = None
 
 class Curso(CursoBase):
     curso_id: int
@@ -108,6 +133,11 @@ class SeccionBase(BaseModel):
 class SeccionCreate(SeccionBase):
     pass
 
+class SeccionUpdate(SeccionBase):
+    curso_id: Optional[int] = None
+    profesor_id: Optional[int] = None
+    codigo: Optional[str] = None
+
 class Seccion(SeccionBase):
     seccion_id: int
     activo: bool
@@ -123,6 +153,11 @@ class MatriculaBase(BaseModel):
 
 class MatriculaCreate(MatriculaBase):
     pass
+
+class MatriculaUpdate(MatriculaBase):
+    estudiante_id: Optional[int] = None
+    seccion_id: Optional[int] = None
+    costo: Optional[float] = None
 
 class Matricula(MatriculaBase):
     matricula_id: int
@@ -141,6 +176,11 @@ class PagoBase(BaseModel):
 class PagoCreate(PagoBase):
     pass
 
+class PagoUpdate(PagoBase):
+    matricula_id: Optional[int] = None
+    monto: Optional[float] = None
+    metodo_pago: Optional[str] = None
+
 class Pago(PagoBase):
     pago_id: int
     fecha_pago: date
@@ -156,6 +196,10 @@ class CalificacionBase(BaseModel):
 
 class CalificacionCreate(CalificacionBase):
     pass
+
+class CalificacionUpdate(CalificacionBase):
+    matricula_id: Optional[int] = None
+    nota: Optional[float] = None
 
 class Calificacion(CalificacionBase):
     calificacion_id: int

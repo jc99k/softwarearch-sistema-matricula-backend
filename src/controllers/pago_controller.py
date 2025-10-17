@@ -6,7 +6,7 @@ from typing import List
 
 from src.database import get_db
 from src.services.pago_service import PagoService
-from src.schemas import Pago, PagoCreate
+from src.schemas import Pago, PagoCreate, PagoUpdate
 
 # Layer: Controller Layer
 # This layer handles the HTTP requests and responses, interacting with the service layer.
@@ -41,3 +41,25 @@ def create_pago(pago: PagoCreate, db: Session = Depends(get_db)):
     service = PagoService(db)
     new_pago = service.create_pago(pago)
     return new_pago
+
+@router.put("/{pago_id}", response_model=Pago)
+def update_pago(pago_id: int, pago_data: PagoUpdate, db: Session = Depends(get_db)):
+    """
+    Update an existing payment.
+    """
+    service = PagoService(db)
+    updated_pago = service.update_pago(pago_id, pago_data)
+    if updated_pago is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pago not found")
+    return updated_pago
+
+@router.delete("/{pago_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_pago(pago_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a payment.
+    """
+    service = PagoService(db)
+    deleted_pago = service.delete_pago(pago_id)
+    if deleted_pago is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pago not found")
+    return

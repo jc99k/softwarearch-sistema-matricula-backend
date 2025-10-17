@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Matricula
-from src.schemas import MatriculaCreate
+from src.schemas import MatriculaCreate, MatriculaUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -28,3 +28,19 @@ class MatriculaService:
         self.db.commit()
         self.db.refresh(new_matricula)
         return new_matricula
+
+    def update_matricula(self, matricula_id: int, matricula_data: MatriculaUpdate):
+        matricula = self.get_matricula_by_id(matricula_id)
+        if matricula:
+            for key, value in matricula_data.dict(exclude_unset=True).items():
+                setattr(matricula, key, value)
+            self.db.commit()
+            self.db.refresh(matricula)
+        return matricula
+
+    def delete_matricula(self, matricula_id: int):
+        matricula = self.get_matricula_by_id(matricula_id)
+        if matricula:
+            self.db.delete(matricula)
+            self.db.commit()
+        return matricula

@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Seccion
-from src.schemas import SeccionCreate
+from src.schemas import SeccionCreate, SeccionUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -34,3 +34,19 @@ class SeccionService:
         self.db.commit()
         self.db.refresh(new_seccion)
         return new_seccion
+
+    def update_seccion(self, seccion_id: int, seccion_data: SeccionUpdate):
+        seccion = self.get_seccion_by_id(seccion_id)
+        if seccion:
+            for key, value in seccion_data.dict(exclude_unset=True).items():
+                setattr(seccion, key, value)
+            self.db.commit()
+            self.db.refresh(seccion)
+        return seccion
+
+    def delete_seccion(self, seccion_id: int):
+        seccion = self.get_seccion_by_id(seccion_id)
+        if seccion:
+            self.db.delete(seccion)
+            self.db.commit()
+        return seccion

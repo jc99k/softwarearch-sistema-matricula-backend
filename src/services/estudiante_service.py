@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Estudiante
-from src.schemas import EstudianteCreate
+from src.schemas import EstudianteCreate, EstudianteUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -31,3 +31,19 @@ class EstudianteService:
         self.db.commit()
         self.db.refresh(new_estudiante)
         return new_estudiante
+
+    def update_estudiante(self, estudiante_id: int, estudiante_data: EstudianteUpdate):
+        estudiante = self.get_estudiante_by_id(estudiante_id)
+        if estudiante:
+            for key, value in estudiante_data.dict(exclude_unset=True).items():
+                setattr(estudiante, key, value)
+            self.db.commit()
+            self.db.refresh(estudiante)
+        return estudiante
+
+    def delete_estudiante(self, estudiante_id: int):
+        estudiante = self.get_estudiante_by_id(estudiante_id)
+        if estudiante:
+            self.db.delete(estudiante)
+            self.db.commit()
+        return estudiante

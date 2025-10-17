@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Facultad
-from src.schemas import FacultadCreate
+from src.schemas import FacultadCreate, FacultadUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -28,3 +28,19 @@ class FacultadService:
         self.db.commit()
         self.db.refresh(new_facultad)
         return new_facultad
+
+    def update_facultad(self, facultad_id: int, facultad_data: FacultadUpdate):
+        facultad = self.get_facultad_by_id(facultad_id)
+        if facultad:
+            for key, value in facultad_data.dict(exclude_unset=True).items():
+                setattr(facultad, key, value)
+            self.db.commit()
+            self.db.refresh(facultad)
+        return facultad
+
+    def delete_facultad(self, facultad_id: int):
+        facultad = self.get_facultad_by_id(facultad_id)
+        if facultad:
+            self.db.delete(facultad)
+            self.db.commit()
+        return facultad

@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 from src.models.models import Carrera
-from src.schemas import CarreraCreate
+from src.schemas import CarreraCreate, CarreraUpdate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
@@ -29,3 +29,19 @@ class CarreraService:
         self.db.commit()
         self.db.refresh(new_carrera)
         return new_carrera
+
+    def update_carrera(self, carrera_id: int, carrera_data: CarreraUpdate):
+        carrera = self.get_carrera_by_id(carrera_id)
+        if carrera:
+            for key, value in carrera_data.dict(exclude_unset=True).items():
+                setattr(carrera, key, value)
+            self.db.commit()
+            self.db.refresh(carrera)
+        return carrera
+
+    def delete_carrera(self, carrera_id: int):
+        carrera = self.get_carrera_by_id(carrera_id)
+        if carrera:
+            self.db.delete(carrera)
+            self.db.commit()
+        return carrera

@@ -6,7 +6,7 @@ from typing import List
 
 from src.database import get_db
 from src.services.curso_service import CursoService
-from src.schemas import Curso, CursoCreate
+from src.schemas import Curso, CursoCreate, CursoUpdate
 
 # Layer: Controller Layer
 # This layer handles the HTTP requests and responses, interacting with the service layer.
@@ -41,3 +41,25 @@ def create_curso(curso: CursoCreate, db: Session = Depends(get_db)):
     service = CursoService(db)
     new_curso = service.create_curso(curso)
     return new_curso
+
+@router.put("/{curso_id}", response_model=Curso)
+def update_curso(curso_id: int, curso_data: CursoUpdate, db: Session = Depends(get_db)):
+    """
+    Update an existing course.
+    """
+    service = CursoService(db)
+    updated_curso = service.update_curso(curso_id, curso_data)
+    if updated_curso is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Curso not found")
+    return updated_curso
+
+@router.delete("/{curso_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_curso(curso_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a course.
+    """
+    service = CursoService(db)
+    deleted_curso = service.delete_curso(curso_id)
+    if deleted_curso is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Curso not found")
+    return
