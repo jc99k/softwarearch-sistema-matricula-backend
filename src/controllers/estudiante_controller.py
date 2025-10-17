@@ -1,56 +1,43 @@
 # src/controllers/estudiante_controller.py
 
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from src.database import get_db
 from src.services.estudiante_service import EstudianteService
+from src.schemas import Estudiante, EstudianteCreate
 
 # Layer: Controller Layer
-# This layer handles the HTTP requests and responses.
+# This layer handles the HTTP requests and responses, interacting with the service layer.
 
-estudiante_bp = Blueprint('estudiante_bp', __name__)
+router = APIRouter()
 
-estudiante_service = EstudianteService()
+@router.get("/", response_model=List[Estudiante])
+def get_all_estudiantes(db: Session = Depends(get_db)):
+    """
+    Retrieve all students.
+    """
+    service = EstudianteService(db)
+    estudiantes = service.get_all_estudiantes()
+    return estudiantes
 
-@estudiante_bp.route('/', methods=['GET'])
-def get_all_estudiantes():
-    estudiantes = estudiante_service.get_all_estudiantes()
-    return jsonify([{
-        'estudiante_id': est.estudiante_id,
-        'nombre': est.nombre,
-        'apellido': est.apellido,
-        'dni': est.dni,
-        'email': est.email,
-        'fecha_nacimiento': str(est.fecha_nacimiento),
-        'direccion': est.direccion,
-        'telefono': est.telefono
-    } for est in estudiantes])
+@router.get("/{estudiante_id}", response_model=Estudiante)
+def get_estudiante(estudiante_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a single student by their ID.
+    """
+    service = EstudianteService(db)
+    estudiante = service.get_estudiante_by_id(estudiante_id)
+    if estudiante is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Estudiante not found")
+    return estudiante
 
-@estudiante_bp.route('/<int:estudiante_id>', methods=['GET'])
-def get_estudiante(estudiante_id):
-    estudiante = estudiante_service.get_estudiante_by_id(estudiante_id)
-    if estudiante:
-        return jsonify({
-            'estudiante_id': estudiante.estudiante_id,
-            'nombre': estudiante.nombre,
-            'apellido': estudiante.apellido,
-            'dni': estudiante.dni,
-            'email': estudiante.email,
-            'fecha_nacimiento': str(estudiante.fecha_nacimiento),
-            'direccion': estudiante.direccion,
-            'telefono': estudiante.telefono
-        })
-    return jsonify({'message': 'Estudiante not found'}), 404
-
-@estudiante_bp.route('/', methods=['POST'])
-def create_estudiante():
-    data = request.get_json()
-    estudiante = estudiante_service.create_estudiante(data)
-    return jsonify({
-        'estudiante_id': estudiante.estudiante_id,
-        'nombre': estudiante.nombre,
-        'apellido': estudiante.apellido,
-        'dni': estudiante.dni,
-        'email': estudiante.email,
-        'fecha_nacimiento': str(estudiante.fecha_nacimiento),
-        'direccion': estudiante.direccion,
-        'telefono': estudiante.telefono
-    }), 201
+@router.post("/", response_model=Estudiante, status_code=status.HTTP_201_CREATED)
+def create_estudiante(estudiante: EstudianteCreate, db: Session = Depends(get_db)):
+    """
+    Create a new student.
+    """
+    service = EstudianteService(db)
+    new_estudiante = service.create_estudiante(estudiante)
+    return new_estudiante

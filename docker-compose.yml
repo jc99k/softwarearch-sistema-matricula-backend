@@ -3,10 +3,9 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://user:password@db/matricula
-      - FLASK_APP=app.py
     depends_on:
       - db
 

@@ -1,54 +1,49 @@
 # app.py
 
-from flask import Flask
-from config import Config
-from src.db import db
+from fastapi import FastAPI
+from src.database import Base, engine
 from src.models import models
 
-def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
+# Layer: Application Layer
+# This file initializes the FastAPI application and includes the routers.
 
+app = FastAPI(
+    title="Sistema de Matricula API",
+    description="API for a course registration system",
+    version="1.0.0",
+)
+
+@app.on_event("startup")
+def on_startup():
     # Layer: Persistence Layer
-    # Initialize extensions
-    db.init_app(app)
+    # Create database tables on startup
+    Base.metadata.create_all(bind=engine)
 
-    with app.app_context():
-        # Create database tables
-        db.create_all()
+# Layer: Controller Layer
+# Include routers for different modules
+from src.controllers import estudiante_controller
+app.include_router(estudiante_controller.router, prefix="/api/estudiantes", tags=["Estudiantes"])
 
-    # Layer: Controller Layer
-    # Register blueprints
-    from src.controllers.estudiante_controller import estudiante_bp
-    app.register_blueprint(estudiante_bp, url_prefix='/api/estudiantes')
+from src.controllers import profesor_controller
+app.include_router(profesor_controller.router, prefix="/api/profesores", tags=["Profesores"])
 
-    from src.controllers.profesor_controller import profesor_bp
-    app.register_blueprint(profesor_bp, url_prefix='/api/profesores')
+from src.controllers import facultad_controller
+app.include_router(facultad_controller.router, prefix="/api/facultades", tags=["Facultades"])
 
-    from src.controllers.facultad_controller import facultad_bp
-    app.register_blueprint(facultad_bp, url_prefix='/api/facultades')
+from src.controllers import carrera_controller
+app.include_router(carrera_controller.router, prefix="/api/carreras", tags=["Carreras"])
 
-    from src.controllers.carrera_controller import carrera_bp
-    app.register_blueprint(carrera_bp, url_prefix='/api/carreras')
+from src.controllers import curso_controller
+app.include_router(curso_controller.router, prefix="/api/cursos", tags=["Cursos"])
 
-    from src.controllers.curso_controller import curso_bp
-    app.register_blueprint(curso_bp, url_prefix='/api/cursos')
+from src.controllers import seccion_controller
+app.include_router(seccion_controller.router, prefix="/api/secciones", tags=["Secciones"])
 
-    from src.controllers.seccion_controller import seccion_bp
-    app.register_blueprint(seccion_bp, url_prefix='/api/secciones')
+from src.controllers import matricula_controller
+app.include_router(matricula_controller.router, prefix="/api/matriculas", tags=["Matriculas"])
 
-    from src.controllers.matricula_controller import matricula_bp
-    app.register_blueprint(matricula_bp, url_prefix='/api/matriculas')
+from src.controllers import pago_controller
+app.include_router(pago_controller.router, prefix="/api/pagos", tags=["Pagos"])
 
-    from src.controllers.pago_controller import pago_bp
-    app.register_blueprint(pago_bp, url_prefix='/api/pagos')
-
-    from src.controllers.calificacion_controller import calificacion_bp
-    app.register_blueprint(calificacion_bp, url_prefix='/api/calificaciones')
-
-    return app
-
-app = create_app()
-
-if __name__ == '__main__':
-    app.run(debug=True)
+from src.controllers import calificacion_controller
+app.include_router(calificacion_controller.router, prefix="/api/calificaciones", tags=["Calificaciones"])

@@ -1,53 +1,43 @@
 # src/controllers/curso_controller.py
 
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from src.database import get_db
 from src.services.curso_service import CursoService
+from src.schemas import Curso, CursoCreate
 
 # Layer: Controller Layer
-# This layer handles the HTTP requests and responses.
+# This layer handles the HTTP requests and responses, interacting with the service layer.
 
-curso_bp = Blueprint('curso_bp', __name__)
+router = APIRouter()
 
-curso_service = CursoService()
+@router.get("/", response_model=List[Curso])
+def get_all_cursos(db: Session = Depends(get_db)):
+    """
+    Retrieve all courses.
+    """
+    service = CursoService(db)
+    cursos = service.get_all_cursos()
+    return cursos
 
-@curso_bp.route('/', methods=['GET'])
-def get_all_cursos():
-    cursos = curso_service.get_all_cursos()
-    return jsonify([{
-        'curso_id': cur.curso_id,
-        'carrera_id': cur.carrera_id,
-        'codigo': cur.codigo,
-        'nombre': cur.nombre,
-        'descripcion': cur.descripcion,
-        'creditos': cur.creditos,
-        'nivel_semestre': cur.nivel_semestre
-    } for cur in cursos])
+@router.get("/{curso_id}", response_model=Curso)
+def get_curso(curso_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a single course by its ID.
+    """
+    service = CursoService(db)
+    curso = service.get_curso_by_id(curso_id)
+    if curso is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Curso not found")
+    return curso
 
-@curso_bp.route('/<int:curso_id>', methods=['GET'])
-def get_curso(curso_id):
-    curso = curso_service.get_curso_by_id(curso_id)
-    if curso:
-        return jsonify({
-            'curso_id': curso.curso_id,
-            'carrera_id': curso.carrera_id,
-            'codigo': curso.codigo,
-            'nombre': curso.nombre,
-            'descripcion': curso.descripcion,
-            'creditos': curso.creditos,
-            'nivel_semestre': curso.nivel_semestre
-        })
-    return jsonify({'message': 'Curso not found'}), 404
-
-@curso_bp.route('/', methods=['POST'])
-def create_curso():
-    data = request.get_json()
-    curso = curso_service.create_curso(data)
-    return jsonify({
-        'curso_id': curso.curso_id,
-        'carrera_id': curso.carrera_id,
-        'codigo': curso.codigo,
-        'nombre': curso.nombre,
-        'descripcion': curso.descripcion,
-        'creditos': curso.creditos,
-        'nivel_semestre': curso.nivel_semestre
-    }), 201
+@router.post("/", response_model=Curso, status_code=status.HTTP_201_CREATED)
+def create_curso(curso: CursoCreate, db: Session = Depends(get_db)):
+    """
+    Create a new course.
+    """
+    service = CursoService(db)
+    new_curso = service.create_curso(curso)
+    return new_curso

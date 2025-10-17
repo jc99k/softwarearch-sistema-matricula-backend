@@ -1,53 +1,43 @@
 # src/controllers/pago_controller.py
 
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from src.database import get_db
 from src.services.pago_service import PagoService
+from src.schemas import Pago, PagoCreate
 
 # Layer: Controller Layer
-# This layer handles the HTTP requests and responses.
+# This layer handles the HTTP requests and responses, interacting with the service layer.
 
-pago_bp = Blueprint('pago_bp', __name__)
+router = APIRouter()
 
-pago_service = PagoService()
+@router.get("/", response_model=List[Pago])
+def get_all_pagos(db: Session = Depends(get_db)):
+    """
+    Retrieve all payments.
+    """
+    service = PagoService(db)
+    pagos = service.get_all_pagos()
+    return pagos
 
-@pago_bp.route('/', methods=['GET'])
-def get_all_pagos():
-    pagos = pago_service.get_all_pagos()
-    return jsonify([{
-        'pago_id': p.pago_id,
-        'matricula_id': p.matricula_id,
-        'fecha_pago': str(p.fecha_pago),
-        'monto': str(p.monto),
-        'metodo_pago': p.metodo_pago,
-        'referencia': p.referencia,
-        'estado': p.estado
-    } for p in pagos])
+@router.get("/{pago_id}", response_model=Pago)
+def get_pago(pago_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a single payment by its ID.
+    """
+    service = PagoService(db)
+    pago = service.get_pago_by_id(pago_id)
+    if pago is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pago not found")
+    return pago
 
-@pago_bp.route('/<int:pago_id>', methods=['GET'])
-def get_pago(pago_id):
-    pago = pago_service.get_pago_by_id(pago_id)
-    if pago:
-        return jsonify({
-            'pago_id': pago.pago_id,
-            'matricula_id': pago.matricula_id,
-            'fecha_pago': str(pago.fecha_pago),
-            'monto': str(pago.monto),
-            'metodo_pago': pago.metodo_pago,
-            'referencia': pago.referencia,
-            'estado': pago.estado
-        })
-    return jsonify({'message': 'Pago not found'}), 404
-
-@pago_bp.route('/', methods=['POST'])
-def create_pago():
-    data = request.get_json()
-    pago = pago_service.create_pago(data)
-    return jsonify({
-        'pago_id': pago.pago_id,
-        'matricula_id': pago.matricula_id,
-        'fecha_pago': str(pago.fecha_pago),
-        'monto': str(pago.monto),
-        'metodo_pago': pago.metodo_pago,
-        'referencia': pago.referencia,
-        'estado': pago.estado
-    }), 201
+@router.post("/", response_model=Pago, status_code=status.HTTP_201_CREATED)
+def create_pago(pago: PagoCreate, db: Session = Depends(get_db)):
+    """
+    Create a new payment.
+    """
+    service = PagoService(db)
+    new_pago = service.create_pago(pago)
+    return new_pago

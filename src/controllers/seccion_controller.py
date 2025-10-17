@@ -1,65 +1,43 @@
 # src/controllers/seccion_controller.py
 
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from src.database import get_db
 from src.services.seccion_service import SeccionService
+from src.schemas import Seccion, SeccionCreate
 
 # Layer: Controller Layer
-# This layer handles the HTTP requests and responses.
+# This layer handles the HTTP requests and responses, interacting with the service layer.
 
-seccion_bp = Blueprint('seccion_bp', __name__)
+router = APIRouter()
 
-seccion_service = SeccionService()
+@router.get("/", response_model=List[Seccion])
+def get_all_secciones(db: Session = Depends(get_db)):
+    """
+    Retrieve all sections.
+    """
+    service = SeccionService(db)
+    secciones = service.get_all_secciones()
+    return secciones
 
-@seccion_bp.route('/', methods=['GET'])
-def get_all_secciones():
-    secciones = seccion_service.get_all_secciones()
-    return jsonify([{
-        'seccion_id': sec.seccion_id,
-        'curso_id': sec.curso_id,
-        'profesor_id': sec.profesor_id,
-        'codigo': sec.codigo,
-        'capacidad_maxima': sec.capacidad_maxima,
-        'aula': sec.aula,
-        'horario': sec.horario,
-        'dias': sec.dias,
-        'periodo_academico': sec.periodo_academico,
-        'fecha_inicio': str(sec.fecha_inicio),
-        'fecha_fin': str(sec.fecha_fin)
-    } for sec in secciones])
+@router.get("/{seccion_id}", response_model=Seccion)
+def get_seccion(seccion_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a single section by its ID.
+    """
+    service = SeccionService(db)
+    seccion = service.get_seccion_by_id(seccion_id)
+    if seccion is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Seccion not found")
+    return seccion
 
-@seccion_bp.route('/<int:seccion_id>', methods=['GET'])
-def get_seccion(seccion_id):
-    seccion = seccion_service.get_seccion_by_id(seccion_id)
-    if seccion:
-        return jsonify({
-            'seccion_id': seccion.seccion_id,
-            'curso_id': seccion.curso_id,
-            'profesor_id': seccion.profesor_id,
-            'codigo': seccion.codigo,
-            'capacidad_maxima': seccion.capacidad_maxima,
-            'aula': seccion.aula,
-            'horario': seccion.horario,
-            'dias': seccion.dias,
-            'periodo_academico': seccion.periodo_academico,
-            'fecha_inicio': str(seccion.fecha_inicio),
-            'fecha_fin': str(seccion.fecha_fin)
-        })
-    return jsonify({'message': 'Seccion not found'}), 404
-
-@seccion_bp.route('/', methods=['POST'])
-def create_seccion():
-    data = request.get_json()
-    seccion = seccion_service.create_seccion(data)
-    return jsonify({
-        'seccion_id': seccion.seccion_id,
-        'curso_id': seccion.curso_id,
-        'profesor_id': seccion.profesor_id,
-        'codigo': seccion.codigo,
-        'capacidad_maxima': seccion.capacidad_maxima,
-        'aula': seccion.aula,
-        'horario': seccion.horario,
-        'dias': seccion.dias,
-        'periodo_academico': seccion.periodo_academico,
-        'fecha_inicio': str(seccion.fecha_inicio),
-        'fecha_fin': str(seccion.fecha_fin)
-    }), 201
+@router.post("/", response_model=Seccion, status_code=status.HTTP_201_CREATED)
+def create_seccion(seccion: SeccionCreate, db: Session = Depends(get_db)):
+    """
+    Create a new section.
+    """
+    service = SeccionService(db)
+    new_seccion = service.create_seccion(seccion)
+    return new_seccion

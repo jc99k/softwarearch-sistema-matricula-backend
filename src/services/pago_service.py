@@ -1,26 +1,30 @@
 # src/services/pago_service.py
 
+from sqlalchemy.orm import Session
 from src.models.models import Pago
-from src.db import db
+from src.schemas import PagoCreate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
 
 class PagoService:
+    def __init__(self, db: Session):
+        self.db = db
 
     def get_all_pagos(self):
-        return Pago.query.all()
+        return self.db.query(Pago).all()
 
-    def get_pago_by_id(self, pago_id):
-        return Pago.query.get(pago_id)
+    def get_pago_by_id(self, pago_id: int):
+        return self.db.query(Pago).filter(Pago.pago_id == pago_id).first()
 
-    def create_pago(self, data):
+    def create_pago(self, pago: PagoCreate):
         new_pago = Pago(
-            matricula_id=data['matricula_id'],
-            monto=data['monto'],
-            metodo_pago=data['metodo_pago'],
-            referencia=data.get('referencia')
+            matricula_id=pago.matricula_id,
+            monto=pago.monto,
+            metodo_pago=pago.metodo_pago,
+            referencia=pago.referencia
         )
-        db.session.add(new_pago)
-        db.session.commit()
+        self.db.add(new_pago)
+        self.db.commit()
+        self.db.refresh(new_pago)
         return new_pago

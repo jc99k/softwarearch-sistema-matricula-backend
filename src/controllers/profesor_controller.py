@@ -1,56 +1,43 @@
 # src/controllers/profesor_controller.py
 
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from src.database import get_db
 from src.services.profesor_service import ProfesorService
+from src.schemas import Profesor, ProfesorCreate
 
 # Layer: Controller Layer
-# This layer handles the HTTP requests and responses.
+# This layer handles the HTTP requests and responses, interacting with the service layer.
 
-profesor_bp = Blueprint('profesor_bp', __name__)
+router = APIRouter()
 
-profesor_service = ProfesorService()
+@router.get("/", response_model=List[Profesor])
+def get_all_profesores(db: Session = Depends(get_db)):
+    """
+    Retrieve all professors.
+    """
+    service = ProfesorService(db)
+    profesores = service.get_all_profesores()
+    return profesores
 
-@profesor_bp.route('/', methods=['GET'])
-def get_all_profesores():
-    profesores = profesor_service.get_all_profesores()
-    return jsonify([{
-        'profesor_id': prof.profesor_id,
-        'nombre': prof.nombre,
-        'apellido': prof.apellido,
-        'dni': prof.dni,
-        'email': prof.email,
-        'especialidad': prof.especialidad,
-        'titulo_academico': prof.titulo_academico,
-        'telefono': prof.telefono
-    } for prof in profesores])
+@router.get("/{profesor_id}", response_model=Profesor)
+def get_profesor(profesor_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a single professor by their ID.
+    """
+    service = ProfesorService(db)
+    profesor = service.get_profesor_by_id(profesor_id)
+    if profesor is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profesor not found")
+    return profesor
 
-@profesor_bp.route('/<int:profesor_id>', methods=['GET'])
-def get_profesor(profesor_id):
-    profesor = profesor_service.get_profesor_by_id(profesor_id)
-    if profesor:
-        return jsonify({
-            'profesor_id': profesor.profesor_id,
-            'nombre': profesor.nombre,
-            'apellido': profesor.apellido,
-            'dni': profesor.dni,
-            'email': profesor.email,
-            'especialidad': profesor.especialidad,
-            'titulo_academico': profesor.titulo_academico,
-            'telefono': profesor.telefono
-        })
-    return jsonify({'message': 'Profesor not found'}), 404
-
-@profesor_bp.route('/', methods=['POST'])
-def create_profesor():
-    data = request.get_json()
-    profesor = profesor_service.create_profesor(data)
-    return jsonify({
-        'profesor_id': profesor.profesor_id,
-        'nombre': profesor.nombre,
-        'apellido': profesor.apellido,
-        'dni': profesor.dni,
-        'email': profesor.email,
-        'especialidad': profesor.especialidad,
-        'titulo_academico': profesor.titulo_academico,
-        'telefono': profesor.telefono
-    }), 201
+@router.post("/", response_model=Profesor, status_code=status.HTTP_201_CREATED)
+def create_profesor(profesor: ProfesorCreate, db: Session = Depends(get_db)):
+    """
+    Create a new professor.
+    """
+    service = ProfesorService(db)
+    new_profesor = service.create_profesor(profesor)
+    return new_profesor

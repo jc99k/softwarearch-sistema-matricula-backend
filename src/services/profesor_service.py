@@ -1,29 +1,33 @@
 # src/services/profesor_service.py
 
+from sqlalchemy.orm import Session
 from src.models.models import Profesor
-from src.db import db
+from src.schemas import ProfesorCreate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
 
 class ProfesorService:
+    def __init__(self, db: Session):
+        self.db = db
 
     def get_all_profesores(self):
-        return Profesor.query.all()
+        return self.db.query(Profesor).all()
 
-    def get_profesor_by_id(self, profesor_id):
-        return Profesor.query.get(profesor_id)
+    def get_profesor_by_id(self, profesor_id: int):
+        return self.db.query(Profesor).filter(Profesor.profesor_id == profesor_id).first()
 
-    def create_profesor(self, data):
+    def create_profesor(self, profesor: ProfesorCreate):
         new_profesor = Profesor(
-            nombre=data['nombre'],
-            apellido=data['apellido'],
-            dni=data['dni'],
-            email=data['email'],
-            especialidad=data.get('especialidad'),
-            titulo_academico=data.get('titulo_academico'),
-            telefono=data.get('telefono')
+            nombre=profesor.nombre,
+            apellido=profesor.apellido,
+            dni=profesor.dni,
+            email=profesor.email,
+            especialidad=profesor.especialidad,
+            titulo_academico=profesor.titulo_academico,
+            telefono=profesor.telefono
         )
-        db.session.add(new_profesor)
-        db.session.commit()
+        self.db.add(new_profesor)
+        self.db.commit()
+        self.db.refresh(new_profesor)
         return new_profesor

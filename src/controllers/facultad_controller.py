@@ -1,47 +1,43 @@
 # src/controllers/facultad_controller.py
 
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from src.database import get_db
 from src.services.facultad_service import FacultadService
+from src.schemas import Facultad, FacultadCreate
 
 # Layer: Controller Layer
-# This layer handles the HTTP requests and responses.
+# This layer handles the HTTP requests and responses, interacting with the service layer.
 
-facultad_bp = Blueprint('facultad_bp', __name__)
+router = APIRouter()
 
-facultad_service = FacultadService()
+@router.get("/", response_model=List[Facultad])
+def get_all_facultades(db: Session = Depends(get_db)):
+    """
+    Retrieve all faculties.
+    """
+    service = FacultadService(db)
+    facultades = service.get_all_facultades()
+    return facultades
 
-@facultad_bp.route('/', methods=['GET'])
-def get_all_facultades():
-    facultades = facultad_service.get_all_facultades()
-    return jsonify([{
-        'facultad_id': fac.facultad_id,
-        'nombre': fac.nombre,
-        'descripcion': fac.descripcion,
-        'ubicacion': fac.ubicacion,
-        'decano': fac.decano
-    } for fac in facultades])
+@router.get("/{facultad_id}", response_model=Facultad)
+def get_facultad(facultad_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a single faculty by its ID.
+    """
+    service = FacultadService(db)
+    facultad = service.get_facultad_by_id(facultad_id)
+    if facultad is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Facultad not found")
+    return facultad
 
-@facultad_bp.route('/<int:facultad_id>', methods=['GET'])
-def get_facultad(facultad_id):
-    facultad = facultad_service.get_facultad_by_id(facultad_id)
-    if facultad:
-        return jsonify({
-            'facultad_id': facultad.facultad_id,
-            'nombre': facultad.nombre,
-            'descripcion': facultad.descripcion,
-            'ubicacion': facultad.ubicacion,
-            'decano': facultad.decano
-        })
-    return jsonify({'message': 'Facultad not found'}), 404
-
-@facultad_bp.route('/', methods=['POST'])
-def create_facultad():
-    data = request.get_json()
-    facultad = facultad_service.create_facultad(data)
-    return jsonify({
-        'facultad_id': facultad.facultad_id,
-        'nombre': facultad.nombre,
-        'descripcion': facultad.descripcion,
-        'ubicacion': facultad.ubicacion,
-        'decano': facultad.decano
-    }), 201
+@router.post("/", response_model=Facultad, status_code=status.HTTP_201_CREATED)
+def create_facultad(facultad: FacultadCreate, db: Session = Depends(get_db)):
+    """
+    Create a new faculty.
+    """
+    service = FacultadService(db)
+    new_facultad = service.create_facultad(facultad)
+    return new_facultad

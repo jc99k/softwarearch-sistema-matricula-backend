@@ -1,29 +1,33 @@
 # src/services/estudiante_service.py
 
+from sqlalchemy.orm import Session
 from src.models.models import Estudiante
-from src.db import db
+from src.schemas import EstudianteCreate
 
 # Layer: Service Layer
 # This layer contains the business logic for the application.
 
 class EstudianteService:
+    def __init__(self, db: Session):
+        self.db = db
 
     def get_all_estudiantes(self):
-        return Estudiante.query.all()
+        return self.db.query(Estudiante).all()
 
-    def get_estudiante_by_id(self, estudiante_id):
-        return Estudiante.query.get(estudiante_id)
+    def get_estudiante_by_id(self, estudiante_id: int):
+        return self.db.query(Estudiante).filter(Estudiante.estudiante_id == estudiante_id).first()
 
-    def create_estudiante(self, data):
+    def create_estudiante(self, estudiante: EstudianteCreate):
         new_estudiante = Estudiante(
-            nombre=data['nombre'],
-            apellido=data['apellido'],
-            dni=data['dni'],
-            email=data['email'],
-            fecha_nacimiento=data['fecha_nacimiento'],
-            direccion=data.get('direccion'),
-            telefono=data.get('telefono')
+            nombre=estudiante.nombre,
+            apellido=estudiante.apellido,
+            dni=estudiante.dni,
+            email=estudiante.email,
+            fecha_nacimiento=estudiante.fecha_nacimiento,
+            direccion=estudiante.direccion,
+            telefono=estudiante.telefono
         )
-        db.session.add(new_estudiante)
-        db.session.commit()
+        self.db.add(new_estudiante)
+        self.db.commit()
+        self.db.refresh(new_estudiante)
         return new_estudiante

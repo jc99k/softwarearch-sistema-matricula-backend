@@ -1,53 +1,43 @@
 # src/controllers/matricula_controller.py
 
-from flask import Blueprint, request, jsonify
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+
+from src.database import get_db
 from src.services.matricula_service import MatriculaService
+from src.schemas import Matricula, MatriculaCreate
 
 # Layer: Controller Layer
-# This layer handles the HTTP requests and responses.
+# This layer handles the HTTP requests and responses, interacting with the service layer.
 
-matricula_bp = Blueprint('matricula_bp', __name__)
+router = APIRouter()
 
-matricula_service = MatriculaService()
+@router.get("/", response_model=List[Matricula])
+def get_all_matriculas(db: Session = Depends(get_db)):
+    """
+    Retrieve all enrollments.
+    """
+    service = MatriculaService(db)
+    matriculas = service.get_all_matriculas()
+    return matriculas
 
-@matricula_bp.route('/', methods=['GET'])
-def get_all_matriculas():
-    matriculas = matricula_service.get_all_matriculas()
-    return jsonify([{
-        'matricula_id': mat.matricula_id,
-        'estudiante_id': mat.estudiante_id,
-        'seccion_id': mat.seccion_id,
-        'fecha_matricula': str(mat.fecha_matricula),
-        'estado': mat.estado,
-        'costo': str(mat.costo),
-        'metodo_pago': mat.metodo_pago
-    } for mat in matriculas])
+@router.get("/{matricula_id}", response_model=Matricula)
+def get_matricula(matricula_id: int, db: Session = Depends(get_db)):
+    """
+    Retrieve a single enrollment by its ID.
+    """
+    service = MatriculaService(db)
+    matricula = service.get_matricula_by_id(matricula_id)
+    if matricula is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Matricula not found")
+    return matricula
 
-@matricula_bp.route('/<int:matricula_id>', methods=['GET'])
-def get_matricula(matricula_id):
-    matricula = matricula_service.get_matricula_by_id(matricula_id)
-    if matricula:
-        return jsonify({
-            'matricula_id': matricula.matricula_id,
-            'estudiante_id': matricula.estudiante_id,
-            'seccion_id': matricula.seccion_id,
-            'fecha_matricula': str(matricula.fecha_matricula),
-            'estado': matricula.estado,
-            'costo': str(matricula.costo),
-            'metodo_pago': matricula.metodo_pago
-        })
-    return jsonify({'message': 'Matricula not found'}), 404
-
-@matricula_bp.route('/', methods=['POST'])
-def create_matricula():
-    data = request.get_json()
-    matricula = matricula_service.create_matricula(data)
-    return jsonify({
-        'matricula_id': matricula.matricula_id,
-        'estudiante_id': matricula.estudiante_id,
-        'seccion_id': matricula.seccion_id,
-        'fecha_matricula': str(matricula.fecha_matricula),
-        'estado': matricula.estado,
-        'costo': str(matricula.costo),
-        'metodo_pago': matricula.metodo_pago
-    }), 201
+@router.post("/", response_model=Matricula, status_code=status.HTTP_201_CREATED)
+def create_matricula(matricula: MatriculaCreate, db: Session = Depends(get_db)):
+    """
+    Create a new enrollment.
+    """
+    service = MatriculaService(db)
+    new_matricula = service.create_matricula(matricula)
+    return new_matricula
