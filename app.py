@@ -1,6 +1,8 @@
 # app.py
 
+import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware # Import CORSMiddleware
 from src.database import Base, engine
 # from src.models import models # This import is no longer needed as models are now in modules
 
@@ -24,6 +26,30 @@ app = FastAPI(
     description="API for a course registration system",
     version="1.0.0",
 )
+
+# Configure CORS
+FRONTEND_URL_ENV = os.getenv("FRONTEND_URL", "http://localhost:5173") # Default for local development
+origins = [origin.strip() for origin in FRONTEND_URL_ENV.split(',')]
+origins.extend([
+    "http://localhost",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000", # Often needed for Docker
+    "http://127.0.0.1",
+    "http://frontend:5173", # Added for Docker Compose internal networking if frontend is another service
+])
+# Remove duplicates if any
+origins = list(set(origins))
+
+print(f"Configuring CORS with allowed origins: {origins}") # Diagnostic print
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.on_event("startup")
 def on_startup():
